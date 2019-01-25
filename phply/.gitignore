@@ -1,0 +1,14 @@
+*.pyc
+parser.out
+parsetab.py
+phply.egg-info
+.eggs
+Lib/
+Scripts/
+pyvenv.cfg
+pip-selfcheck.json
+man/
+*.sw?
+.tox
+build/
+dist/

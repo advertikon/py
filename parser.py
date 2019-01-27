@@ -1,4 +1,5 @@
-import sys
-import phply.phply.phpparse as parser
+import phply.phpparse as parser
 
 parser.main()
+
+

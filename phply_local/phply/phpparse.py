@@ -1653,6 +1653,7 @@ def main():
         return
 
     parser = make_parser(args.debug)
+
     if args.path is None:
         run_parser(parser, sys.stdin, args.quiet, args.debug)
     elif os.path.isfile(args.path):
@@ -1662,6 +1663,7 @@ def main():
         if not args.recursive:
             print('directory path given, use -r for recursive processing')
         else:
+            sys.stderr.write( "Default choice\n" )
             for root, dirs, files in os.walk(args.path):
                 for fpath in files:
                     if not fpath.endswith('.php'):

@@ -1629,7 +1629,7 @@ def p_empty(p):
 # Error rule for syntax errors
 def p_error(t):
     if t:
-        raise SyntaxError('invalid syntax', (None, t.lineno, None, t.value))
+        raise SyntaxError('invalid syntax', (None, t.lexpos, None, t.value))
     else:
         raise SyntaxError('unexpected EOF while parsing', (None, None, None, None))
 

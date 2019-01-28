@@ -5,6 +5,9 @@ function foo(){
 	$s = 0;
 }
 
+const FOO = 4;
+const BAR = 8;
+
 class Baz {}
 
 class Boo extends Baz {

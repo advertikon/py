@@ -12,6 +12,7 @@ import pickle
 import pprint
 import hashlib
 from .phply_local.phpast import *
+import re
 
 mPage = {}
 
@@ -66,7 +67,7 @@ class Page:
 
 		try:
 			self.structure = parser.parse( self.getContent(), lexer=lexer.clone(), debug=False )
-			print( self.structure )
+			self.prettyPrint( self.structure )
 			self.parseStructure()
 		except SyntaxError as e:
 			print( e )
@@ -156,4 +157,33 @@ class Page:
 				self.constants = item.nodes
 
 			elif type( item ).__name__ == "Function": 
-				self.fnctions.append( item )
+				self.functions.append( item )
+
+	def prettyPrint( self, data ): 
+		for item in data:
+			if hasattr( item, 'generic'):
+				item = item.generic( True )
+			pprint.pprint( item )
+
+	def scope( self ):
+		pos = self.view.sel()[ 0 ].begin()
+		# line = self.view.line( pos )
+		# print( "Row: %s, col: %s" % self.view.rowcol( pos ) )
+		buff = self.view.substr( sublime.Region( 0, pos ) )
+		scope_start = 0
+		brace_count = 0
+
+		for i in reversed( range( 0, len( buff ) ) ):
+			if buff[ i ] == "{":
+				brace_count += 1
+
+				if brace_count == 1:
+					scope_start = i
+					break
+
+			elif buff[ i ] == "}":
+				brace_count -= 1
+
+		print( "Buff len: %s" % len( buff ) )
+		print( "Offset: %s" % scope_start )
+		print( "Row: %s, col: %s" % self.view.rowcol( scope_start ) )

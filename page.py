@@ -178,12 +178,34 @@ class Page:
 				brace_count += 1
 
 				if brace_count == 1:
-					scope_start = i
-					break
+					pos = self.findScopeStart( buff, i )
+
+					if None != pos:
+						scope_start = pos
+						break
+					else:
+						brace_count = 0
 
 			elif buff[ i ] == "}":
 				brace_count -= 1
 
 		print( "Buff len: %s" % len( buff ) )
 		print( "Offset: %s" % scope_start )
-		print( "Row: %s, col: %s" % self.view.rowcol( scope_start ) )
+		row, col = self.view.rowcol( scope_start )
+		row += 1
+		print( "Row: %s, col: %s" % ( row, col ) )
+
+	def findScopeStart( self, buff, pos ):
+		print( "Search around: '" + buff[ pos-20 : pos ] + "'" )
+		# match = re.search( r"function\s*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\s*\([^)]*\)\s*$", buff[ : pos ] )
+		re_class   = r"class \s* [a-zA-Z_\x7f-\xff\\][a-zA-Z0-9_\x7f-\xff\\]* \s* (extends \s* [a-zA-Z_\x7f-\xff\\][a-zA-Z0-9_\x7f-\xff\\]* )? \s* $"
+		re_func    = r"function \s* [a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]* \s* \([^)]*\) \s* $"
+		re_closure = r"function \s* \([^)]*\) \s* (use \s* \([^)]*\))? \s* $"
+		match = re.search( "(" + re_class + "|" + re_func + "|" + re_closure + ")" , buff[ : pos ], re.X )
+
+		if None != match:
+			print( "Found" )
+			return match.start( 0 )
+		else:
+			print( "No match" )
+			return None

@@ -235,6 +235,10 @@ class Page:
 				self.scope.setClass( item )
 
 			if item.lineno == lineno:
+				if type( item ).__name__ == "Assignment" and type( item.expr ).__name__ == "Closure":
+					self.scope.setScope( item.expr )
+					return
+
 				self.scope.setScope( item )
 				return
 

@@ -7,6 +7,7 @@ class Scope:
 	scope     = None
 	cursorRow = None
 	errors    = None
+	vars      = None
 
 	def __str__( self ):
 		return "Cursor: %s\nNamespace: %s\nClass: %s\n%s" % ( self.cursorRow, self.namespace.name if self.namespace else "", \
@@ -35,4 +36,11 @@ class Scope:
 
 	def checkInexistedVars( self ):
 		pass
+
+	def getVars( self ):
+		pass
+
+	def isFunction( self ):
+		pass
+
 

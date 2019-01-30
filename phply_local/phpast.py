@@ -3,6 +3,7 @@
 #
 # PHP abstract syntax node definitions.
 # ----------------------------------------------------------------------
+import pprint
 
 class Node(object):
     fields = []
@@ -19,9 +20,16 @@ class Node(object):
             setattr(self, field, args[i])
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__,
-                           ', '.join([repr(getattr(self, field))
-                                      for field in self.fields]))
+  #   	name = self.__class__.__name__
+  #   	attrs = ()
+		# for k, v in self.__dict__.iteritems()
+		# 	attrs.append( repr( k ) )
+
+    	# return name + "(\n" + "\n".join( attrs ) + "\n)" 
+    	return pprint.pformat( self.generic( True ) )
+        # return "%s(%s)" % (self.__class__.__name__,
+        #                    ', '.join([repr(getattr(self, field))
+        #                               for field in self.fields]))
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -58,7 +66,7 @@ class Node(object):
                         item = item.generic(with_lineno)
                     value.append(item)
             values[field] = value
-        return (self.__class__.__name__, values)
+        return (self.__class__.__name__, values )
 
 def node(name, fields):
     attrs = {'fields': fields}

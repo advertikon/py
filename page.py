@@ -13,6 +13,8 @@ import pprint
 import hashlib
 from .phply_local.phpast import *
 import re
+import phply_local.phpast as ast
+from .scope import Scope
 
 mPage = {}
 
@@ -26,11 +28,14 @@ class Page:
 	functions   = []
 	constants   = []
 	globalScope = []
-	namespace = ""
+	scope       = None
+	namespace   = ""
+	cursorRow   = 0
 
 	def __init__( self, view ):
 		self.view     = view
 		self.fileName = view.file_name()
+		print( vars( self ).items() )
 
 	def get( view, createNew = False ):
 		global mPage
@@ -67,8 +72,8 @@ class Page:
 
 		try:
 			self.structure = parser.parse( self.getContent(), lexer=lexer.clone(), debug=False )
-			self.prettyPrint( self.structure )
-			self.parseStructure()
+			print( self.structure )
+			# self.parseStructure()
 		except SyntaxError as e:
 			print( e )
 			if e.lineno is not None:
@@ -93,12 +98,15 @@ class Page:
 			self.fileName  = None
 			self.hashCode  = None
 			self.namespace = None
+			self.scope     = None
+			self.cursorRow = None
 			mPage.pop( code )
 		else:
 			print( "Assist. Cannot save page structure - page object is None" )
 
 	def save( self ):
 		start = time.time()
+		self.parseStructure()
 		dir = self.cacheFolder + self.namespace.replace( "\\", "/" ) + "/"
 		print( "Dir to save: " + dir )
 
@@ -140,6 +148,7 @@ class Page:
 	def clearError( self ):
 		self.view.erase_regions( "error" )
 
+	# information to be saved in the cache
 	def parseStructure( self ):
 		self.namespace = []
 		self.classes   = []
@@ -159,16 +168,13 @@ class Page:
 			elif type( item ).__name__ == "Function": 
 				self.functions.append( item )
 
-	def prettyPrint( self, data ): 
-		for item in data:
-			if hasattr( item, 'generic'):
-				item = item.generic( True )
-			pprint.pprint( item )
-
-	def scope( self ):
+	# initiates scope object for current cursor position
+	# callaback to view modified event
+	def initScope( self ):
 		pos = self.view.sel()[ 0 ].begin()
-		# line = self.view.line( pos )
-		# print( "Row: %s, col: %s" % self.view.rowcol( pos ) )
+		cRow, cCol = self.view.rowcol( pos )
+		self.cursorRow = cRow + 1
+
 		buff = self.view.substr( sublime.Region( 0, pos ) )
 		scope_start = 0
 		brace_count = 0
@@ -189,14 +195,15 @@ class Page:
 			elif buff[ i ] == "}":
 				brace_count -= 1
 
-		print( "Buff len: %s" % len( buff ) )
-		print( "Offset: %s" % scope_start )
 		row, col = self.view.rowcol( scope_start )
 		row += 1
-		print( "Row: %s, col: %s" % ( row, col ) )
+		self.findScope( row )
+		print( self.scope )
+		errors = self.scope.check()
+		print( errors ) 
 
 	def findScopeStart( self, buff, pos ):
-		print( "Search around: '" + buff[ pos-20 : pos ] + "'" )
+		# print( "Search around: '" + buff[ pos-20 : pos ] + "'" )
 		# match = re.search( r"function\s*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\s*\([^)]*\)\s*$", buff[ : pos ] )
 		re_class   = r"class \s* [a-zA-Z_\x7f-\xff\\][a-zA-Z0-9_\x7f-\xff\\]* \s* (extends \s* [a-zA-Z_\x7f-\xff\\][a-zA-Z0-9_\x7f-\xff\\]* )? \s* $"
 		re_func    = r"function \s* [a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]* \s* \([^)]*\) \s* $"
@@ -204,8 +211,39 @@ class Page:
 		match = re.search( "(" + re_class + "|" + re_func + "|" + re_closure + ")" , buff[ : pos ], re.X )
 
 		if None != match:
-			print( "Found" )
+			# print( "Found" )
 			return match.start( 0 )
 		else:
-			print( "No match" )
+			# print( "No match" )
 			return None
+
+	def findScope( self, lineno ):
+		self.scope = Scope()
+		self.scope.setCursorRow( self.cursorRow )
+		self.getScope( lineno )
+
+
+	def getScope( self, lineno, parentScope = None ):
+		iterable = parentScope.nodes if parentScope else self.structure
+		scope = None
+
+		for item in iterable:
+			if ( type( item ).__name__ == "Namespace" ):
+				self.scope.setNamespace( item )
+
+			elif type( item ).__name__ == "Class":
+				self.scope.setClass( item )
+
+			if item.lineno == lineno:
+				self.scope.setScope( item )
+				return
+
+			# check previous scope
+			if item.lineno > lineno:
+				return self.getScope( lineno, scope )
+
+			else:
+				scope = item
+
+		# somewhere in the mids of the last scope
+		return self.getScope( lineno, item )

@@ -75,7 +75,7 @@ class ViewEvents( sublime_plugin.ViewEventListener ):
 			print( "Assist: on modified of %s..." % self.view.file_name() )
 			page = Page.get( self.view, True  )
 			page.parse()
-			page.scope()
+			page.initScope()
 			# self.view.run_command( "get_scope" )
 
 

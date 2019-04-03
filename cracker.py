@@ -106,7 +106,12 @@ crcString = ""
 
 for c in cookie:
 	if re.match( r'^\s?incap_ses_', c.name ):
-		crcString += crc( navigatorData + c.value )
+		print( "Incap session cookie: " + c.value  )
+		crcTmp = crc( navigatorData + c.value )
+		print( "CRC value: " + crcTmp )
+		crcString += crcTmp
+
+print( "Resulting CRC: " + crcString )
 
 salt = "813VS3efAyF7csIfnfHiy4wLHigQYLXv2g/ecA=="
 hexHash = ""
@@ -114,21 +119,16 @@ hexHash = ""
 i = 0
 for c in salt:
 	hexHash += "{:x}".format( ord( c ) + ord( crcString[ i % len( crcString ) ] ) );
-# match = re.match( '<script src="(.*?)">', body )
-# if match:
-# 	next = match.group( 1 )
-# else:
-# 	raise Error( "script URL is missing at the first page" )
 
-# next = "/_Incapsula_Resource?SWJIYLWA=5074a744e2e3d891814e9a2dace20bd4,719d34d31c8e3a6e6fffd425f7e032f3"
-#        "/_Incapsula_Resource?SWJIYLWA=5074a744e2e3d891814e9a2dace20bd4,719d34d31c8e3a6e6fffd425f7e032f3"
-# print( next )
+print( "Hash: " + hexHash )
 
-# c.request( "GET", "/_Incapsula_Resource?SWUDNSAI=28&xinfo=8-15874296-0%200NNN%20RT%281553864887817%20548%29%20q%280%20-1%20-1%20-1%29%20r%280%20-1%29%20B12%284%2c315%2c0%29%20U18&incident_id=1226000100051018203-46740995291349160&edet=12&cinfo=04000000" )
+navigarotBase64 = base64.base64encode( navigatorData )
+print( "Navigator Base64: " + navigarotBase64 )
+navigatorDecoded = decode( navigarotBase64, salt[ 0:5 ] )
+print( "Navigator decoded: " + navigatorDecoded )
 
-# resp = c.getresponse()
+secret = base64.base64encode( navigatorDecoded + ",digest=" + crcString + ",s=" + hexHash )
+print( "Secret: " + secret )
 
-# print( resp.status, resp.reason )
-# print( resp.read() )
 
 cookie.save( "cookie" )

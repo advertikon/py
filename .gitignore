@@ -1,3 +1,2 @@
 cache/*
 .scrapy/google
-#.scrapy/dayly/storage.db

@@ -6,10 +6,20 @@ import urlparse
 import re
 from datetime import datetime
 
+import os
+
 class MySpider(CrawlSpider):
 	name            = "gplay"
 	allowed_domains = ["play.google.com"]
-	start_urls      = ["https://play.google.com/store/apps/"]
+	start_urls = []
+
+	if ( os.path.isfile( "/max/home/Dropbox/google/data/list" ) ):
+		with open( "/max/home/Dropbox/google/data/list" ) as f:
+			for l in f:
+				start_urls.append( l.strip() )
+
+	start_urls.apend( "https://play.google.com/store/apps/" )
+
 	rules = (
 		Rule(LinkExtractor( allow=( '/store/apps/details' ) ), follow=True, callback='parse_link' ),
 		Rule(LinkExtractor( allow=( '/store/apps', ) ), follow=True )

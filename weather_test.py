@@ -4,6 +4,7 @@ import json
 import os
 import getopt
 import sys
+import random
 
 clean_run = False
 current_calls_file = "weathe_current_calls"
@@ -40,7 +41,7 @@ def flush_files():
 	global forecast_calls_file
 	global forecast_dates_file
 
-	for f in [ current_calls_file, current_dates_file, forecast_calls_file, forecast_dates_file ]:
+	for f in [ current_calls_file, current_dates_file ]:
 		c = open( f, "w" )
 		c.close()
 
@@ -113,11 +114,15 @@ def get_key():
 		sys.exit( 4 )
 
 	with open( "owak", "r" ) as f:
-		return f.read().strip()
+		lines = f.readlines()
+		# key = random.choice( lines ).strip()
+		key = lines[ 0 ].strip()
+		print( 'Key: {}'.format( key ) )
+
+		return key
 
 ################################################################################################
 
-key = get_key()
 sity_id = 687700
 curent_weather_url = "https://api.openweathermap.org/data/2.5/weather"
 forecast_url = "https://api.openweathermap.org/data/2.5/forecast"
@@ -135,7 +140,7 @@ if clean_run:
 while True:
 
 	try:
-		with urllib.request.urlopen( '{}?id={}&APPID={}&units={}'.format( curent_weather_url, sity_id, key, units ) ) as f:
+		with urllib.request.urlopen( '{}?id={}&APPID={}&units={}'.format( curent_weather_url, sity_id, get_key(), units ) ) as f:
 			resp = f.read().decode( "utf-8" )
 			j = json.loads( resp )
 
@@ -151,46 +156,43 @@ while True:
 			# time.sleep( 1 )
 			try_count = 0
 
-	except urllib.error.URLError:
+	except urllib.error.URLError as e:
+		print( e )
 		if try_count > 10:
 			prtint( "Internet error" )
 			sys.exit( 1 )
 
-		pritn( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
+		print( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
 		time.sleep( 1 << try_count )
 		try_count += 1
 		continue
 
-	try:
-		with urllib.request.urlopen( '{}?id={}&APPID={}&units={}'.format( forecast_url, sity_id, key, units ) ) as f:
-			resp = f.read().decode( "utf-8" )
-			j = json.loads( resp )
+	# try:
+	# 	with urllib.request.urlopen( '{}?id={}&APPID={}&units={}'.format( forecast_url, sity_id, get_key(), units ) ) as f:
+	# 		resp = f.read().decode( "utf-8" )
+	# 		j = json.loads( resp )
 
-			cod = int( j.get( 'cod' ).strip() )
+	# 		cod = int( j.get( 'cod' ).strip() )
 
-			if cod != 200:
-				print( 'Return code: {}. Exit'.format( cod ) )
-				print( j )
-				sys.exit( 2 )
+	# 		if cod != 200:
+	# 			print( 'Return code: {}. Exit'.format( cod ) )
+	# 			print( j )
+	# 			sys.exit( 2 )
 
-			# increment_call_count( "Forecast" )
-			# # print( j )
-			# dt = j.get( "txt_dt" )
-			# remember_time( dt, "Forecast" )
+	# 		# first forecast
+	# 		f = j.get( "list" )[ 0 ]
+	# 		dt = time.ctime( f.get( 'dt' ) )
+	# 		print( 'Forecast: {}: {}'.format( dt, f.get( 'main' ).get( 'temp' ) ) )
+	# 		# time.sleep( 1 )
+	# 		try_count = 0
 
-			# first forecast
-			f = j.get( "list" )[ 0 ]
-			dt = time.ctime( f.get( 'dt' ) )
-			print( 'Forecast: {}: {}'.format( dt, f.get( 'main' ).get( 'temp' ) ) )
-			# time.sleep( 1 )
-			try_count = 0
+	# except urllib.error.URLError as e:
+	# 	print( e )
+	# 	if try_count > 10:
+	# 		prtint( "Internet error" )
+	# 		sys.exit( 1 )
 
-	except urllib.error.URLError:
-		if try_count > 10:
-			prtint( "Internet error" )
-			sys.exit( 1 )
-
-		pritn( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
-		time.sleep( 1 << try_count )
-		try_count += 1
-		continue
+	# 	print( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
+	# 	time.sleep( 1 << try_count )
+	# 	try_count += 1
+	# 	continue

@@ -38,8 +38,8 @@ def flush_files():
 	print( "Flushing files" )
 	global current_calls_file
 	global current_dates_file
-	global forecast_calls_file
-	global forecast_dates_file
+	# global forecast_calls_file
+	# global forecast_dates_file
 
 	for f in [ current_calls_file, current_dates_file ]:
 		c = open( f, "w" )

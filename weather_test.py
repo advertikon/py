@@ -4,23 +4,28 @@ import json
 import os
 import getopt
 import sys
+import random
 
 clean_run = False
+coordinates = None
 current_calls_file = "weathe_current_calls"
 current_dates_file = "weathe_current_dates"
 forecast_calls_file = "weathe_forecast_calls"
 forecast_dates_file = "weathe_forecast_dates"
+coords_file = "coords"
 
 def print_usage():
 	print( "Usage: ")
 	print( "-f - flush data. Start anew" )
+	print( "-c - by coordinates ( 0 - sitiz )")
 	print( "-h - usage")
 
 def process_arguments():
 	global clean_run
+	global coordinates
 
 	try:
-		opt, args = getopt.getopt( sys.argv[1:], 'hf', [] )
+		opt, args = getopt.getopt( sys.argv[1:], 'hfc:', [] )
 	except getopt.GetoptError as err:
 		sys.stderr.write( str( err ) )
 		print_help()
@@ -29,6 +34,12 @@ def process_arguments():
 	for o, v in opt:
 		if o in ( "-f" ):
 			clean_run = True
+		if o in ( "-c" ):
+			try:	
+				coordinates = int( v )
+			except ValueError:
+				print( "Invalid coordinate offset: {}".format( v ) )
+				sys.exit( 7 )
 		elif o in ( "-h" ):
 			print_usage()
 			sys.exit( 0 )
@@ -40,7 +51,7 @@ def flush_files():
 	global forecast_calls_file
 	global forecast_dates_file
 
-	for f in [ current_calls_file, current_dates_file, forecast_calls_file, forecast_dates_file ]:
+	for f in [ current_calls_file, current_dates_file ]:
 		c = open( f, "w" )
 		c.close()
 
@@ -113,11 +124,44 @@ def get_key():
 		sys.exit( 4 )
 
 	with open( "owak", "r" ) as f:
-		return f.read().strip()
+		lines = f.readlines()
+		# key = random.choice( lines ).strip()
+		key = lines[ 0 ].strip()
+		print( 'Key: {}'.format( key ) )
+
+		return key
+
+def get_city():
+	global coordinates
+	global sity_id
+	global coords_file
+
+	if coordinates is not None:
+		if not os.path.isfile( coords_file ):
+			print( "File with coordinates ({}) does not exist".format( coords_file ) )
+			sys.exit( 5 )
+
+		with open( coords_file, "r" ) as f:
+			c = f.readlines()
+
+			if ( coordinates >= len( c ) ):
+				print( "Coordinates index is out of bound ({})".format( len( c ) - 1 ) )
+				sys.exit( 6 )
+
+			data = c[ coordinates ].strip().split( "\t" )
+
+			if ( len( data ) is not 3 ):
+				print( "Coordinates record is malformed" )
+				sys.exit( 7 )
+
+			return "lat={}&lon={}".format( data[ 0 ], data[ 1 ] )
+
+	#default case
+	return "id={}".format( sity_id )
+
 
 ################################################################################################
 
-key = get_key()
 sity_id = 687700
 curent_weather_url = "https://api.openweathermap.org/data/2.5/weather"
 forecast_url = "https://api.openweathermap.org/data/2.5/forecast"
@@ -135,9 +179,12 @@ if clean_run:
 while True:
 
 	try:
-		with urllib.request.urlopen( '{}?id={}&APPID={}&units={}'.format( curent_weather_url, sity_id, key, units ) ) as f:
+		with urllib.request.urlopen( '{}?{}&APPID={}&units={}'.format( curent_weather_url, get_city(), get_key(), units ) ) as f:
 			resp = f.read().decode( "utf-8" )
 			j = json.loads( resp )
+
+			# print( j )
+			# sys.exit( 0 )
 
 			if j.get( "cod" ) != 200:
 				print( j )
@@ -146,25 +193,29 @@ while True:
 			increment_call_count()
 			# print( j )
 			dt = time.ctime( j.get( 'dt' ) )
-			print( '{}: {}'.format( dt, j.get( 'main' ).get( 'temp' ) ) )
+			main = j.get( "main" )
+			print( '{}: {} - ({} - {}) - {}'.format( dt, main.get( 'temp' ), main.get( 'temp_min' ), main.get( 'temp_max' ), j.get( "name" ) ) )
 			remember_time( dt )
 			# time.sleep( 1 )
 			try_count = 0
 
-	except urllib.error.URLError:
+	except urllib.error.URLError as e:
+		print( e )
 		if try_count > 10:
 			prtint( "Internet error" )
 			sys.exit( 1 )
 
-		pritn( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
+		print( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
 		time.sleep( 1 << try_count )
 		try_count += 1
 		continue
 
 	try:
-		with urllib.request.urlopen( '{}?id={}&APPID={}&units={}'.format( forecast_url, sity_id, key, units ) ) as f:
+		with urllib.request.urlopen( '{}?{}&APPID={}&units={}'.format( forecast_url, get_city(), get_key(), units ) ) as f:
 			resp = f.read().decode( "utf-8" )
 			j = json.loads( resp )
+			# print( j )
+			# sys.exit( 0 )
 
 			cod = int( j.get( 'cod' ).strip() )
 
@@ -173,24 +224,23 @@ while True:
 				print( j )
 				sys.exit( 2 )
 
-			# increment_call_count( "Forecast" )
-			# # print( j )
-			# dt = j.get( "txt_dt" )
-			# remember_time( dt, "Forecast" )
-
-			# first forecast
-			f = j.get( "list" )[ 0 ]
-			dt = time.ctime( f.get( 'dt' ) )
-			print( 'Forecast: {}: {}'.format( dt, f.get( 'main' ).get( 'temp' ) ) )
+			for f in j.get( "list" ):
+				dt = time.ctime( f.get( 'dt' ) )
+				temp = f.get( "main" ).get( "temp" )
+				weather = f.get( "weather" )[ 0 ].get( "description" )
+				print( "\t: {}: {} - {}".format( dt, temp, weather ) )
 			# time.sleep( 1 )
 			try_count = 0
 
-	except urllib.error.URLError:
+			sys.exit( 0 )
+
+	except urllib.error.URLError as e:
+		print( e )
 		if try_count > 10:
 			prtint( "Internet error" )
 			sys.exit( 1 )
 
-		pritn( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
+		print( 'Connection error. Waiting {} second(s) to retry'.format( 1 << try_count ) )
 		time.sleep( 1 << try_count )
 		try_count += 1
 		continue

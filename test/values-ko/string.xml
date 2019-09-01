@@ -1,0 +1,2 @@
+<resources>
+<string name="app_name">포켓 계산기</string><string name="today">오늘</string><string name="title_activity_setting">설정</string><string name="finish">끝</string><string name="next">다음 (% s)</string><string name="look_history">계산 기록을 보려면 드래그</string><string name="extended_keyboard">확장 키보드로 전환</string><string name="delete_character">단일 문자를 삭제하려면 클릭</string><string name="clear_all">길게 누르면 입력이 지워집니다.</string><string name="leave_comment">의견을 들려주세요</string><string name="not_now">나중에 상기시켜 줘</string><string name="never_ask">다시 묻지마</string></resources>

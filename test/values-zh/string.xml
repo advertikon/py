@@ -1,0 +1,2 @@
+<resources>
+<string name="app_name">口袋计算器</string><string name="today">今天</string><string name="title_activity_setting">设置</string><string name="finish">完</string><string name="next">下一个（％s）</string><string name="look_history">拖动以查看计算历史记录</string><string name="extended_keyboard">切换到扩展键盘</string><string name="delete_character">单击以删除单个字符</string><string name="clear_all">长按以清除输入</string><string name="leave_comment">让我们知道您的意见</string><string name="not_now">稍后提醒我</string><string name="never_ask">永远不要再问了</string></resources>

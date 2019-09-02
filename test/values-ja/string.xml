@@ -1,0 +1,2 @@
+<resources>
+<string name="app_name">ポケット電卓</string><string name="today">今日</string><string name="title_activity_setting">設定</string><string name="finish">終わり</string><string name="next">次（％s）</string><string name="look_history">ドラッグして計算履歴を表示</string><string name="extended_keyboard">拡張キーボードに切り替える</string><string name="delete_character">クリックして単一の文字を削除します</string><string name="clear_all">長押しして入力をクリアする</string><string name="leave_comment">ご意見をお聞かせください</string><string name="not_now">後で通知する</string><string name="never_ask">二度と聞かない</string></resources>

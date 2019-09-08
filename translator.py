@@ -166,93 +166,124 @@ languages = {
 	'zu': 'Zulu'
 }
 
+
 def print_usage():
 	print( "Usage: ")
-	pritn( "Run int from a directory you need to create translations, eg app/src/main/res" )
+	print( "Run int from a directory you need to create translations, eg app/src/main/res" )
 	print( "-v - verbose" )
-	print( "-i - input file or string, id file save to file structure, if string to STDOUT")
+	print( "-f - input file")
+	print( "-s - input string")
 	print( "-h - usage")
+
 
 def process_arguments():
 	global dryRun
-	global input
+	global fileName
 	global verbose
-	global isString
+	global inputString
 
 	try:
-		opt, args = getopt.getopt( sys.argv[1:], 'dhi:v', [] )
+		opt, args = getopt.getopt( sys.argv[1:], 'dhf:vs:', [] )
 	except getopt.GetoptError as err:
 		sys.stderr.write( str( err ) )
-		print_help()
+		print_usage()
 		sys.exit( 1 )
 
 	for o, v in opt:
-		if o in ( "-i" ):
+		if o == "-f":
 			if v and not os.path.isfile( v ):
-				isString = True
-			input = v
-		elif o in ( "-c" ):
-			try:    
-				coordinates = int( v )
-			except ValueError:
-				print( "Invalid coordinate offset: {}".format( v ) )
-				sys.exit( 7 )
+				sys.stderr.write( '{} is not a file'.format( v ) )
+				print_usage()
+				sys.exit( 1 )
+			fileName = v
+			sys.stderr.write( "Already done translations may be overwritten" )
+			sys.exit( 1 )
 		elif o == "-d":
 			dryRun = True
-		elif o in ( "-h" ):
+		elif o == "-s":
+			inputString = v
+		elif o == "-h":
 			print_usage()
 			sys.exit( 0 )
 		elif o == "-v":
 			verbose = True
 
-	if not input:
+	if not fileName and not inputString:
 		sys.stderr.write( "Source required\n" )
 		sys.exit( 1 )
 
-def collectTranslations():
-	global input
-	start = False
-	list = []
+	if fileName and inputString:
+		sys.stderr.write( "File or string needs to be provided but not the both\n" )
+		print_usage()
+		sys.exit(1)
 
-	with open( input , "r" ) as f:
+
+def collect_translations():
+	global fileName
+	words_list = []
+
+	with open( fileName, "r" ) as f:
 		while True:
 			line = f.readline()
 
-			if len( list ) and not line.strip():
+			if len( words_list ) and not line.strip():
 				break
 
 			m = re.search( r'<string\s+name="([^"]+?)"\s*>(.+)</string>', line )
 
-			if ( m ):
-				list.append( ( m.group( 1 ), m.group( 2 ) ) )
+			if m:
+				words_list.append( ( m.group( 1 ), m.group( 2 ) ) )
 
-	return list
+	return words_list
 
-def saveTranslation( list, language ):
-	dirName = "values-{}".format( language )
+
+def save_translation(words_list, language):
+	dir_name = "values-{}".format( language )
 
 	content = "<resources>\n"
 
-	for code, translation in list:
-		content += "<string name=\"{}\">{}</string>\n".format( code, translation )
+	for translation_code, translation_string in words_list:
+		content += "<string name=\"{}\">{}</string>\n".format( translation_code, translation_string )
 
 	content += "</resources>\n"
 
-	fileName = dirName + "/string.xml"
+	file_name = dir_name + "/string.xml"
 
-	if not os.path.isdir( dirName ):
-		os.mkdir( dirName )
+	if not os.path.isdir( dir_name ):
+		os.mkdir( dir_name )
 
-	with open( fileName, "w" ) as f:
+	with open(file_name, "w") as f:
 		f.write( content )
+
+
+def calls_control():
+	global callsCount
+	global callsPerMinute
+	global callsStart
+	global lastCallTime
+
+	if lastCallTime:
+		current_time = time.clock()
+		seconds_between = 60 / callsPerMinute
+
+		if current_time - lastCallTime < seconds_between:
+			# print( 'Sleeping for {}'.format( seconds_between - ( current_time - lastCallTime ) ) )
+			time.sleep( seconds_between - ( current_time - lastCallTime ) )
+
+	lastCallTime = time.clock()
+	# print( 'Call at {}'.format( time.time() ) )
 
 
 #####################################################################################################
 
 dryRun = False
-input = ""
+fileName = ""
 verbose = False
-isString = False
+inputString = ""
+callsPerMinute = 60
+callsCount = 0
+lastCallTime = 0
+callsStart = time.clock()
 
 myLanguages = {
 	# 'auto': 'Automatic',
@@ -364,11 +395,15 @@ myLanguages = {
 
 process_arguments()
 
+# while True:
+# 	calls_control()
+# sys.exit( 0 )
+
 fromL = "en"
 baseURL = 'https://translate.google.com/translate_a/single?client=webapp&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t'
 
 # translate a string
-if isString:
+if inputString:
 	for toL in myLanguages:
 		query = {
 			'sl': fromL,
@@ -382,8 +417,8 @@ if isString:
 		}
 
 		url = baseURL + "&" + urlencode( query ) + token.get( input )
-		request  = urllib.request.Request( url, headers = headers )
-		opener   = urllib.request.build_opener( urllib.request.HTTPCookieProcessor( cookieJar ) )
+		request = urllib.request.Request( url, headers=headers )
+		opener = urllib.request.build_opener( urllib.request.HTTPCookieProcessor( cookieJar ) )
 		response = opener.open( request )
 
 		rawResponse = response.read().decode( "utf-8" )
@@ -397,13 +432,17 @@ if isString:
 	sys.exit( 0 )
 
 # translate a file
-list = collectTranslations()
+list = collect_translations()
+
+sys.stderr.write( 'Number of translations: {}\n'.format( len( list ) ) )
 
 for toL in myLanguages:
+	sys.stderr.write( 'Translation to {}\n'.format( toL ) )
 	output = []
 	targetLanguage = toL.split("-")[ 0 ]
 
 	for code, text in list:
+		calls_control()
 		query = {
 			'sl': fromL,
 			'tl': toL,
@@ -416,8 +455,8 @@ for toL in myLanguages:
 		}
 
 		url = baseURL + "&" + urlencode( query ) + token.get( text )
-		request  = urllib.request.Request( url, headers = headers )
-		opener   = urllib.request.build_opener( urllib.request.HTTPCookieProcessor( cookieJar ) )
+		request = urllib.request.Request( url, headers=headers )
+		opener = urllib.request.build_opener( urllib.request.HTTPCookieProcessor( cookieJar ) )
 		response = opener.open( request )
 
 		rawResponse = response.read().decode( "utf-8" )
@@ -426,7 +465,4 @@ for toL in myLanguages:
 
 		output.append( ( code, translation ) )
 
-		if verbose:
-			print( "%s (%s) => %s (%s)" % ( text, fromL, translation, targetLanguage ) )
-
-	saveTranslation( output, targetLanguage )
+	save_translation(output, targetLanguage)

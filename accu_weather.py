@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import urllib.request
 import json
 import urllib.parse
@@ -41,7 +42,7 @@ k2 ='1726cc2d792447b6bd7ca2f00b1344f7'
 base_url = 'https://api.accuweather.com/'
 
 loc = 'locations/v1/326514'
-details = 'false'
+details = 'true'
 lang = 'uk-UA'
 lang = 'en-GB'
 location_id = 326514
@@ -51,7 +52,6 @@ u = '{}{}?apikey={}&language={}&details={}'.format( base_url, loc, k1, lang, det
 
 u = '{}/locations/v1/cities/autocomplete?apikey={}&q={}&language={}'.format( base_url, k1, urllib.parse.quote( 'лон' ), lang )
 
-u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 
 u = '{}indices/v1/daily/groups?apikey={}'.format( base_url, k2 )
 
@@ -64,6 +64,9 @@ u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}imagery/v1/maps/radsat/480x480/{}?apikey={}'.format( base_url, location_id, k1 )
 
 u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&metric={}&details={}'.format( base_url, location_id, k1, metric, details )
+u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+u = '{}/forecasts/v1/hourly/12hour/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+u = '{}/forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 
 with urllib.request.urlopen( u ) as f:
 	resp = f.read().decode( "utf-8" )

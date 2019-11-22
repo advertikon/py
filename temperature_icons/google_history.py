@@ -16,7 +16,9 @@ from htmldom import htmldom
 sourceFile = None
 sourceUrl = None
 verbose = False
+showLibraries = False
 baseUrl = "https://www.appbrain.com/app/"
+startTime = time.time()
 
 
 def print_usage():
@@ -24,6 +26,7 @@ def print_usage():
 	print("Show PlayMarket App history\nFirst argument is app ID")
 	print( "-i - app ID" )
 	print( "-f - CSV file to read IDs from" )
+	print( "-l - show libraries" )
 	print("-v - verbose")
 	print("-h - usage")
 
@@ -32,9 +35,10 @@ def process_arguments():
 	global sourceFile
 	global sourceUrl
 	global verbose
+	global showLibraries
 
 	try:
-		opt, args = getopt.getopt(sys.argv[1:], 'vhi:f:', [])
+		opt, args = getopt.getopt(sys.argv[1:], 'vhi:f:l', [])
 	except getopt.GetoptError as err:
 		sys.stderr.write(str(err))
 		print_usage()
@@ -48,6 +52,8 @@ def process_arguments():
 			verbose = True
 		elif o == "-i":
 			sourceUrl = v
+		elif o == '-l':
+			showLibraries = True
 		elif o == "-f":
 			if not os.path.isfile( v ):
 				sys.stderr.write( "{} is not a file\n".format( v ) )
@@ -78,6 +84,14 @@ def print_item( id, name = "None", position="None" ):
 
 		print('{:12} - {}'.format(date, description) )
 
+	if showLibraries:
+		libs = []
+
+		for lib in dom.find( ".app-library-item" ):
+			libs.append( lib.text().strip() )
+
+		print( "Libraries:", ", ".join( libs ) )
+
 	print( "" )
 
 
@@ -95,20 +109,34 @@ def print_all( file ):
 
 			print_item( row[ 9 ], row[ 1 ], row[ 0 ] )
 
-			wait = random.uniform( 1, 20 )
+			wait = random.uniform( 1, 120 )
 			time.sleep(wait)
 
 def read_site( url ):
+	global startTime
+
 	proxies = {
 		'http': 'socks5://127.0.0.1:9050',
 		'https': 'socks5://127.0.0.1:9050'
 	}
 
-	# proxies = {}
+	proxies = {}
 	headers = {'User-Agent': UserAgent().random}
-	html = requests.get( url, proxies=proxies, headers=headers ).text
-	# print( html )
-	return html
+	request = requests.get( url, proxies=proxies, headers=headers )
+
+	print( 'Time: {:.1f} min'.format( ( time.time() - startTime ) / 60 ) )
+
+	if 403 == request.status_code:
+		print( "Forbidden. Fusk" )
+		sys.exit( 0 )
+	elif 429 == request.status_code:
+		print( "They got me...." )
+		sys.exit( 0 )
+	elif 200 != request.status_code:
+		print(request.status_code, request.reason)
+		print( request.text )
+
+	return request.text
 
 def get_new_ip():
 	with Controller.from_port(port=9051) as c:
@@ -118,9 +146,6 @@ def get_new_ip():
 ########################################################################################################################
 
 process_arguments()
-
-get_new_ip()
-print( read_site( 'https://ident.me' ) )
 
 if sourceFile:
 	print_all( sourceFile )

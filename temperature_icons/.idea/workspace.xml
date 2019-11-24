@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="38227f3e-8869-497f-9c1c-154e243bce8d" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/icon_thumbnail.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/temperature_icons.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/temperature_icons.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../accu_weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/../accu_weather.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../weathe_current_calls" beforeDir="false" afterPath="$PROJECT_DIR$/../weathe_current_calls" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../weathe_current_dates" beforeDir="false" afterPath="$PROJECT_DIR$/../weathe_current_dates" afterDir="false" />
@@ -30,7 +28,7 @@
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../accu_weather.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../translator.py" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">

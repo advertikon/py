@@ -173,6 +173,7 @@ def print_usage():
 	print( "-v - verbose" )
 	print( "-f - input file")
 	print( "-s - input string")
+	print( "-d - dry run")
 	print( "-h - usage")
 
 
@@ -183,7 +184,7 @@ def process_arguments():
 	global inputString
 
 	try:
-		opt, args = getopt.getopt( sys.argv[1:], 'dhf:vs:', [] )
+		opt, args = getopt.getopt( sys.argv[1:], 'dhf:vs:d', [] )
 	except getopt.GetoptError as err:
 		sys.stderr.write( str( err ) )
 		print_usage()
@@ -207,6 +208,8 @@ def process_arguments():
 			sys.exit( 0 )
 		elif o == "-v":
 			verbose = True
+		elif o == '-d':
+			dryRun = True
 
 	if not fileName and not inputString:
 		sys.stderr.write( "Source required\n" )

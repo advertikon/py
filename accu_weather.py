@@ -47,6 +47,8 @@ detail = 'false'
 lang = 'uk-UA'
 lang = 'en-GB'
 location_id = 326514
+location_id = 1219294 #bohatyrivka
+# location_id = 108301
 metric = 'true'
 
 u = '{}{}?apikey={}&language={}&details={}'.format( base_url, loc, k1, lang, details )
@@ -58,18 +60,23 @@ u = '{}indices/v1/daily/groups?apikey={}'.format( base_url, k2 )
 
 u = '{}indices/v1/daily/5day/{}/12?apikey={}'.format( base_url, location_id, k2 )
 
-u = '{}alarms/v1/15day/{}?apikey={}'.format( base_url, location_id, k1 )
 
-u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
 
 u = '{}imagery/v1/maps/radsat/480x480/{}?apikey={}'.format( base_url, location_id, k1 )
 
 u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&metric={}&details={}'.format( base_url, location_id, k1, metric, details )
+u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
+u = '{}alarms/v1/5day/{}?apikey={}'.format( base_url, location_id, k1 )
+u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&details={}&language={}&metric={}'.format( base_url, location_id, k1, details, lang, metric )
 u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+<<<<<<< HEAD
 u = '{}alarms/v1/1day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}currentconditions/v1/{}/historical/24?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}forecasts/v1/hourly/24hour/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}forecasts/v1/daily/10day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+=======
+>>>>>>> 95f3861facdb3ae0d94583ca5428170364ac9ab3
 
 with urllib.request.urlopen( u ) as f:
 	resp = f.read().decode( "utf-8" )

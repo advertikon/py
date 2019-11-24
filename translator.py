@@ -12,9 +12,13 @@ import urllib.request
 import time
 
 import json
+import io
 
 import google_translate_token.token as token
 from urllib.parse import urlencode
+# from fake_useragent import UserAgen
+# import requests
+from lxml import etree
 
 # driver = webdriver.Chrome() # ~/.local/bin/chromedriver - driver location
 # driver.get( "https://translate.google.com.ua/" )
@@ -49,13 +53,15 @@ cookieJar = http.cookiejar.CookieJar()
 
 
 headers = {
-	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,"
+		"application/signed-exchange;v=b3",
 	"Accept-Encoding": "none",
 	"Accept-Language": "en",
 	"Connection": "keep-alive",
 	"DNT": "1",
 	"Upgrade-Insecure-Requests": "1",
-	"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36"
+	"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 "
+		"Safari/537.36"
 }
 
 languages = {
@@ -178,85 +184,148 @@ def print_usage():
 
 
 def process_arguments():
-	global dryRun
 	global fileName
 	global verbose
 	global inputString
+	global dryRun
 
 	try:
 		opt, args = getopt.getopt( sys.argv[1:], 'dhf:vs:d', [] )
+
 	except getopt.GetoptError as err:
-		sys.stderr.write( str( err ) )
+		sys.stderr.write(str(err))
 		print_usage()
-		sys.exit( 1 )
+		sys.exit(1)
 
 	for o, v in opt:
 		if o == "-f":
-			if v and not os.path.isfile( v ):
-				sys.stderr.write( '{} is not a file'.format( v ) )
+			if v and not os.path.isfile(v):
+				sys.stderr.write('{} is not a file\n'.format(v))
 				print_usage()
-				sys.exit( 1 )
+				sys.exit(1)
 			fileName = v
-			sys.stderr.write( "Already done translations may be overwritten" )
-			sys.exit( 1 )
-		elif o == "-d":
-			dryRun = True
 		elif o == "-s":
 			inputString = v
 		elif o == "-h":
 			print_usage()
-			sys.exit( 0 )
+			sys.exit(0)
 		elif o == "-v":
 			verbose = True
 		elif o == '-d':
 			dryRun = True
 
 	if not fileName and not inputString:
-		sys.stderr.write( "Source required\n" )
-		sys.exit( 1 )
+		sys.stderr.write("Source required\n")
+		print_usage()
+		sys.exit(1)
 
 	if fileName and inputString:
-		sys.stderr.write( "File or string needs to be provided but not the both\n" )
+		sys.stderr.write("File or string needs to be provided but not the both\n")
 		print_usage()
 		sys.exit(1)
 
 
-def collect_translations():
-	global fileName
-	words_list = []
+def collect_translations(file):
+	words_list = {}
 
-	with open( fileName, "r" ) as f:
-		while True:
-			line = f.readline()
+	if not os.path.isfile(file):
+		return words_list
 
-			if len( words_list ) and not line.strip():
-				break
+	with open(file, "r") as f:
+		root = etree.fromstring(f.read())
 
-			m = re.search( r'<string\s+name="([^"]+?)"\s*>(.+)</string>', line )
+		for string in root:
+			if string.get("translatable") and "false" == string.get("translatable"):
+				continue
 
-			if m:
-				words_list.append( ( m.group( 1 ), m.group( 2 ) ) )
+			words_list[string.get('name')] = string.text
 
 	return words_list
 
 
+def translate_file():
+	global myLanguages
+	global fileName
+	global fromL
+
+	translations = collect_translations(fileName)
+	sys.stderr.write('Number of translations: {}\n'.format(len(translations)))
+
+	for toL in myLanguages:
+		sys.stderr.write('Translation to {}\n'.format(toL))
+		translate(fromL, toL, translations)
+
+
+def translate(from_lang, to_lang, translations):
+	global baseURL
+	global headers
+	global cookieJar
+
+	target_language = to_lang.split("-")[0]
+	output = collect_translations("values-{}/strings.xml".format(target_language))
+	total_count = len(translations)
+	count = 0
+
+	for code, text in translations.items():
+		if output.get(code):
+			print_inline('{:.0%} Skipping translation for {}'.format(count/total_count, code))
+			count += 1
+			continue
+
+		calls_control()
+		query_values = {
+			'sl': from_lang,
+			'tl': to_lang,
+			'hl': to_lang,
+			'otf': 1,
+			'ssel': 0,
+			'tsel': 0,
+			'kc': 1,
+			'q': text
+		}
+
+		url = baseURL + "&" + urlencode(query_values) + token.get(text)
+		print_inline("{:.0%} Translating '{}'".format(count / total_count, code))
+		request = urllib.request.Request(url, headers=headers)
+		opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookieJar))
+		response = opener.open(request)
+
+		raw_response = response.read().decode("utf-8")
+		json_response = json.loads(raw_response)
+		translation = json_response[0][0][0].replace("'", "\\'")
+		# translation = translation.lower()
+
+		if text[0].isupper():
+			translation = translation[0].upper() + translation[1:]
+
+		output[code] = translation
+		count += 1
+
+	print("")
+	save_translation(output, target_language)
+
+
 def save_translation(words_list, language):
-	dir_name = "values-{}".format( language )
+	global dryRun
 
-	content = "<resources>\n"
+	if dryRun:
+		print( words_list)
+		return
 
-	for translation_code, translation_string in words_list:
-		content += "<string name=\"{}\">{}</string>\n".format( translation_code, translation_string )
+	dir_name = "values-{}".format(language)
+	root = etree.Element("resources")
 
-	content += "</resources>\n"
+	for translation_code, translation_string in words_list.items():
+		item = etree.SubElement(root, 'string', name=translation_code)
+		item.text = translation_string
 
-	file_name = dir_name + "/string.xml"
+	file_name = dir_name + "/strings.xml"
 
-	if not os.path.isdir( dir_name ):
-		os.mkdir( dir_name )
+	if not os.path.isdir(dir_name):
+		os.mkdir(dir_name)
 
 	with open(file_name, "w") as f:
-		f.write( content )
+		f.write(etree.tostring(root, encoding="unicode", pretty_print=True))
 
 
 def calls_control():
@@ -271,15 +340,73 @@ def calls_control():
 
 		if current_time - lastCallTime < seconds_between:
 			# print( 'Sleeping for {}'.format( seconds_between - ( current_time - lastCallTime ) ) )
-			time.sleep( seconds_between - ( current_time - lastCallTime ) )
+			time.sleep(seconds_between - (current_time - lastCallTime))
 
 	lastCallTime = time.clock()
-	# print( 'Call at {}'.format( time.time() ) )
+
+
+# print( 'Call at {}'.format( time.time() ) )
+
+
+def check_cwd():
+	cwd = os.getcwd()
+
+	if os.path.basename(cwd) != "res":
+		pritn("CWD should be 'res'")
+		sys.exit(0)
+
+
+def translate_string():
+	global myLanguages
+
+	for toL in myLanguages:
+		query = {
+			'sl': fromL,
+			'tl': toL,
+			'hl': toL,
+			'otf': 1,
+			'ssel': 0,
+			'tsel': 0,
+			'kc': 1,
+			'q': input
+		}
+
+		url = baseURL + "&" + urlencode(query) + token.get(input)
+		request = urllib.request.Request(url, headers=headers)
+		opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookieJar))
+		response = opener.open(request)
+
+		raw_response = response.read().decode("utf-8")
+		json_response = json.loads(raw_response)
+		translation = json_response[0][0][0].replace("'", "\\'")
+
+		print("<{}>".format(toL))
+		print(translation)
+		print("</{}>".format(toL))
+
+
+def print_inline(text):
+	global unbuffered_out
+	global terminal_columns
+
+	if not unbuffered_out:
+		try:
+			unbuffered_out = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
+		except TypeError:
+			unbuffered_out = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+	unbuffered_out.write("\b" * terminal_columns)
+
+	if len(text) < terminal_columns:
+		text += " " * (terminal_columns - len(text))
+	elif len(text) > terminal_columns:
+		text = text[0, terminal_columns]
+
+	unbuffered_out.write(text)
 
 
 #####################################################################################################
 
-dryRun = False
 fileName = ""
 verbose = False
 inputString = ""
@@ -287,6 +414,11 @@ callsPerMinute = 60
 callsCount = 0
 lastCallTime = 0
 callsStart = time.clock()
+unbuffered_out = None
+dryRun = False
+
+terminal_rows, terminal_columns = os.popen('stty size', 'r').read().split()
+terminal_columns = int(terminal_columns)
 
 myLanguages = {
 	# 'auto': 'Automatic',
@@ -397,75 +529,17 @@ myLanguages = {
 }
 
 process_arguments()
-
+check_cwd()
 # while True:
 # 	calls_control()
 # sys.exit( 0 )
 
 fromL = "en"
-baseURL = 'https://translate.google.com/translate_a/single?client=webapp&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t'
+baseURL = 'https://translate.google.com/translate_a/single?client=webapp&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw' \
+	'&dt=rm&dt=ss&dt=t'
 
 # translate a string
 if inputString:
-	for toL in myLanguages:
-		query = {
-			'sl': fromL,
-			'tl': toL,
-			'hl': toL,
-			'otf': 1,
-			'ssel': 0,
-			'tsel': 0,
-			'kc': 1,
-			'q': input
-		}
-
-		url = baseURL + "&" + urlencode( query ) + token.get( input )
-		request = urllib.request.Request( url, headers=headers )
-		opener = urllib.request.build_opener( urllib.request.HTTPCookieProcessor( cookieJar ) )
-		response = opener.open( request )
-
-		rawResponse = response.read().decode( "utf-8" )
-		jsonResponse = json.loads( rawResponse )
-		translation = jsonResponse[ 0 ][ 0 ][ 0 ].replace( "'", "\\'" )
-
-		print( "<{}>".format( toL ) )
-		print( translation )
-		print( "</{}>".format( toL ) )
-
-	sys.exit( 0 )
-
-# translate a file
-list = collect_translations()
-
-sys.stderr.write( 'Number of translations: {}\n'.format( len( list ) ) )
-
-for toL in myLanguages:
-	sys.stderr.write( 'Translation to {}\n'.format( toL ) )
-	output = []
-	targetLanguage = toL.split("-")[ 0 ]
-
-	for code, text in list:
-		calls_control()
-		query = {
-			'sl': fromL,
-			'tl': toL,
-			'hl': toL,
-			'otf': 1,
-			'ssel': 0,
-			'tsel': 0,
-			'kc': 1,
-			'q': text
-		}
-
-		url = baseURL + "&" + urlencode( query ) + token.get( text )
-		request = urllib.request.Request( url, headers=headers )
-		opener = urllib.request.build_opener( urllib.request.HTTPCookieProcessor( cookieJar ) )
-		response = opener.open( request )
-
-		rawResponse = response.read().decode( "utf-8" )
-		jsonResponse = json.loads( rawResponse )
-		translation = jsonResponse[ 0 ][ 0 ][ 0 ].replace( "'", "\\'" )
-
-		output.append( ( code, translation ) )
-
-	save_translation(output, targetLanguage)
+	translate_string()
+else:
+	translate_file()

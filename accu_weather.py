@@ -67,8 +67,8 @@ u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&metric={}&details={}'.format( bas
 u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}alarms/v1/5day/{}?apikey={}'.format( base_url, location_id, k1 )
-u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&details={}&language={}&metric={}'.format( base_url, location_id, k1, details, lang, metric )
 u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&details={}&language={}&metric={}'.format( base_url, location_id, k1, details, lang, metric )
 
 with urllib.request.urlopen( u ) as f:
 	resp = f.read().decode( "utf-8" )

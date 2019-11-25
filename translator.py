@@ -174,21 +174,24 @@ languages = {
 
 
 def print_usage():
-	print("Usage: ")
-	print("Run int from a directory you need to create translations, eg app/src/main/res")
-	print("-v - verbose")
-	print("-f - input file")
-	print("-s - input string")
-	print("-h - usage")
+	print( "Usage: ")
+	print( "Run int from a directory you need to create translations, eg app/src/main/res" )
+	print( "-v - verbose" )
+	print( "-f - input file")
+	print( "-s - input string")
+	print( "-d - dry run")
+	print( "-h - usage")
 
 
 def process_arguments():
 	global fileName
 	global verbose
 	global inputString
+	global dryRun
 
 	try:
-		opt, args = getopt.getopt(sys.argv[1:], 'hf:vs:', [])
+		opt, args = getopt.getopt( sys.argv[1:], 'dhf:vs:d', [] )
+
 	except getopt.GetoptError as err:
 		sys.stderr.write(str(err))
 		print_usage()
@@ -208,6 +211,8 @@ def process_arguments():
 			sys.exit(0)
 		elif o == "-v":
 			verbose = True
+		elif o == '-d':
+			dryRun = True
 
 	if not fileName and not inputString:
 		sys.stderr.write("Source required\n")
@@ -226,7 +231,7 @@ def collect_translations(file):
 	if not os.path.isfile(file):
 		return words_list
 
-	with open(fileName, "r") as f:
+	with open(file, "r") as f:
 		root = etree.fromstring(f.read())
 
 		for string in root:
@@ -265,7 +270,6 @@ def translate(from_lang, to_lang, translations):
 		if output.get(code):
 			print_inline('{:.0%} Skipping translation for {}'.format(count/total_count, code))
 			count += 1
-			time.sleep(1)
 			continue
 
 		calls_control()
@@ -281,9 +285,7 @@ def translate(from_lang, to_lang, translations):
 		}
 
 		url = baseURL + "&" + urlencode(query_values) + token.get(text)
-
 		print_inline("{:.0%} Translating '{}'".format(count / total_count, code))
-
 		request = urllib.request.Request(url, headers=headers)
 		opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookieJar))
 		response = opener.open(request)
@@ -291,6 +293,10 @@ def translate(from_lang, to_lang, translations):
 		raw_response = response.read().decode("utf-8")
 		json_response = json.loads(raw_response)
 		translation = json_response[0][0][0].replace("'", "\\'")
+		# translation = translation.lower()
+
+		if text[0].isupper():
+			translation = translation[0].upper() + translation[1:]
 
 		output[code] = translation
 		count += 1
@@ -300,6 +306,12 @@ def translate(from_lang, to_lang, translations):
 
 
 def save_translation(words_list, language):
+	global dryRun
+
+	if dryRun:
+		print( words_list)
+		return
+
 	dir_name = "values-{}".format(language)
 	root = etree.Element("resources")
 
@@ -403,6 +415,7 @@ callsCount = 0
 lastCallTime = 0
 callsStart = time.clock()
 unbuffered_out = None
+dryRun = False
 
 terminal_rows, terminal_columns = os.popen('stty size', 'r').read().split()
 terminal_columns = int(terminal_columns)

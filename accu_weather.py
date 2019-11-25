@@ -43,6 +43,7 @@ base_url = 'https://api.accuweather.com/'
 
 loc = 'locations/v1/326514'
 details = 'true'
+detail = 'false'
 lang = 'uk-UA'
 lang = 'en-GB'
 location_id = 326514
@@ -68,7 +69,6 @@ u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base
 u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}alarms/v1/5day/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
-u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&details={}&language={}&metric={}'.format( base_url, location_id, k1, details, lang, metric )
 
 with urllib.request.urlopen( u ) as f:
 	resp = f.read().decode( "utf-8" )

@@ -18,6 +18,13 @@ class PackageManager:
 		"exclude_regex": "",
 	}
 
+	include_files_list = None
+	exclude_files_list = None
+	include_folders_list = None
+	exclude_folders_list = None
+	include_regex_list = None
+	exclude_regex_list = None
+
 	def __init__(self):
 		if not os.path.isfile(self.package_file_name):
 			print("\033[0;31mNOT A CRAWLER DIRECTORY\033[0m")
@@ -138,3 +145,135 @@ class PackageManager:
 
 	def load_module(self, number):
 		self.module = self.read_packages()[number-1]
+
+	def get_include_files(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.include_files_list is not None:
+			return self.include_files_list
+
+		nodes = self.module.xpath('include_file')
+		self.include_files_list = []
+		files = None
+
+		if nodes:
+			files = nodes[0].text
+
+		if not files:
+			return self.include_files_list
+
+		for f in files.split(","):
+			self.include_files_list.append( f.strip() )
+
+		return self.include_files_list
+
+	def get_exclude_files(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.exclude_files_list is not None:
+			return self.exclude_files_list
+
+		nodes = self.module.xpath('exclude_file')
+		self.exclude_files_list = []
+		files = None
+
+		if nodes:
+			files = nodes[0].text
+
+		if not files:
+			return self.exclude_files_list
+
+		for f in files.split(","):
+			self.exclude_files_list.append( f.strip() )
+
+		return self.exclude_files_list
+
+	def get_include_folders(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.include_folders_list is not None:
+			return self.include_folders_list
+
+		nodes = self.module.xpath('include_folder')
+		self.include_folders_list = []
+		files = None
+
+		if nodes:
+			files = nodes[0].text
+
+		if not files:
+			return self.include_folders_list
+
+		for f in files.split(","):
+			self.include_folders_list.append( f.strip().strip('/') )
+
+		return self.include_folders_list
+
+	def get_exclude_folders(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.exclude_folders_list is not None:
+			return self.exclude_folders_list
+
+		nodes = self.module.xpath('exclude_folder')
+		self.exclude_folders_list = []
+		files = None
+
+		if nodes:
+			files = nodes[0].text
+
+		if not files:
+			return self.exclude_folders_list
+
+		for f in files.split(","):
+			self.exclude_folders_list.append( f.strip().strip('/') )
+
+		return self.exclude_folders_list
+
+	def get_include_regex(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.include_regex_list is not None:
+			return self.include_regex_list
+
+		nodes = self.module.xpath('include_regex')
+		self.include_regex_list = []
+		files = None
+
+		if nodes:
+			files = nodes[0].text
+
+		if not files:
+			return self.include_regex_list
+
+		for f in files.split(","):
+			self.include_regex_list.append( f.strip() )
+
+		return self.include_regex_list
+
+	def get_exclude_regex(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.exclude_regex_list is not None:
+			return self.exclude_regex_list
+
+		nodes = self.module.xpath('include_regex')
+		self.exclude_regex_list = []
+		files = None
+
+		if nodes:
+			files = nodes[0].text
+
+		if not files:
+			return self.exclude_regex_list
+
+		for f in files.split(","):
+			self.exclude_regex_list.append( f.strip() )
+
+		return self.exclude_regex_list

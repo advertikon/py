@@ -1,4 +1,5 @@
 from package_manager import PackageManager
+from file_manager import FileManager
 import sys
 
 
@@ -34,3 +35,5 @@ elif action == 's':
 		sys.exit(1)
 
 	pm.load_module(n)
+	fm = FileManager(pm)
+	fm.collect_files()

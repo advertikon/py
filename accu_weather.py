@@ -65,10 +65,10 @@ u = '{}indices/v1/daily/5day/{}/12?apikey={}'.format( base_url, location_id, k2 
 u = '{}imagery/v1/maps/radsat/480x480/{}?apikey={}'.format( base_url, location_id, k1 )
 
 u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&metric={}&details={}'.format( base_url, location_id, k1, metric, details )
-u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}alarms/v1/5day/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 
 with urllib.request.urlopen( u ) as f:
 	resp = f.read().decode( "utf-8" )

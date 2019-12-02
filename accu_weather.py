@@ -65,15 +65,19 @@ u = '{}indices/v1/daily/5day/{}/12?apikey={}'.format( base_url, location_id, k2 
 u = '{}imagery/v1/maps/radsat/480x480/{}?apikey={}'.format( base_url, location_id, k1 )
 
 u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&metric={}&details={}'.format( base_url, location_id, k1, metric, details )
-u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}alarms/v1/5day/{}?apikey={}'.format( base_url, location_id, k1 )
+<<<<<<< HEAD
 u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&details={}&language={}&metric={}'.format( base_url, location_id, k1, details, lang, metric )
 u = '{}alarms/v1/1day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}forecasts/v1/daily/10day/{}?apikey={}&details=true&language={}&metric=true'.format( base_url, location_id, k1, lang )
 u = '{}forecasts/v1/hourly/24hour/{}?apikey={}&details={}&language={}&metric=true'.format( base_url, location_id, k1, details, lang )
 u = '{}currentconditions/v1/{}/historical/24?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}&metric=true'.format( base_url, location_id, k1, details, lang )
+=======
+u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
+>>>>>>> 080d0703edcaffb4ae2c234de38a408b19bc0e57
 
 with urllib.request.urlopen( u ) as f:
 	resp = f.read().decode( "utf-8" )

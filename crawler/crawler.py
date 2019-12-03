@@ -36,4 +36,5 @@ elif action == 's':
 
 	pm.load_module(n)
 	fm = FileManager(pm)
-	fm.collect_files()
+	fm.make_oc3()
+	pm.save()  # apply version and crc changes

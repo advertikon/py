@@ -1,3 +1,4 @@
+import glob
 import os
 from lxml import etree
 
@@ -16,6 +17,7 @@ class PackageManager:
 		"exclude_folder": "",
 		"include_regex": "",
 		"exclude_regex": "",
+		"crc": ""
 	}
 
 	include_files_list = None
@@ -24,6 +26,14 @@ class PackageManager:
 	exclude_folders_list = None
 	include_regex_list = None
 	exclude_regex_list = None
+	is_extended = None
+	code = None
+	version = None
+	crc = None  # package CRC
+	saved_crc = None  # CRC read from file system
+	crawler_dir = "/var/www/html/crawler/"
+	oc3_package_text = "-OC-23-3-"
+	oc2_package_text = "-OC-20-22-"
 
 	def __init__(self):
 		if not os.path.isfile(self.package_file_name):
@@ -42,7 +52,7 @@ class PackageManager:
 
 	def save_xml(self, xml):
 		xml_string = etree.tostring(xml, pretty_print=True, xml_declaration=True, encoding="utf-8")
-		print(xml_string)
+
 		try:
 			with open(self.package_file_name, "wb") as xml_writer:
 				xml_writer.write(xml_string)
@@ -277,3 +287,197 @@ class PackageManager:
 			self.exclude_regex_list.append( f.strip() )
 
 		return self.exclude_regex_list
+
+	def get_is_extended(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.is_extended is not None:
+			return self.is_extended
+
+		if self.module.get('extended') == '1':
+			self.is_extended = True
+		else:
+			self.is_extended = False
+
+		return self.is_extended
+
+	def get_code(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.code is not None:
+			return self.code
+
+		nodes = self.module.xpath('code')
+
+		if nodes:
+			self.code = nodes[0].text
+
+		if not self.code:
+			raise KeyError("Package does not contain code")
+
+		return self.code
+
+	def get_crc(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.crc is not None:
+			return self.crc
+
+		nodes = self.module.xpath('crc')
+
+		if nodes:
+			self.crc = nodes[0].text
+		else:
+			self.crc = ""
+
+		return self.crc
+
+	def get_version(self):
+		latest_version = None  # at config
+
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		if self.version is not None:
+			return self.version
+
+		nodes = self.module.xpath('version')
+
+		if nodes and nodes[0].text:
+			latest_version = nodes[0].text
+		else:
+			latest_version = '0.0.1'
+
+		saved_version = self.get_saved_version()  # at crawler folder
+
+		if self.version_compare(saved_version, latest_version) > 0:
+			self.version = self.increment_version(saved_version)  # disc wins
+		else:
+			if self.is_crc_equals():
+				self.version = latest_version  # config wins, only if files are the same
+			else:
+				self.version = self.increment_version(latest_version)
+
+		self.update_version()
+
+		return self.version
+
+	def get_oc3_package_name(self):
+		base = ''
+
+		if not self.get_is_extended():
+			base = '-base'
+
+		return '{}{}/{}{}v{}{}.ocmod'.format(
+			self.crawler_dir,
+			self.get_code(),
+			self.get_code(),
+			self.oc3_package_text,
+			self.get_version(),
+			base)
+
+	def get_package_regex(self):
+		base = ''
+		package_text = self.oc3_package_text # Oc2 and OC3 should have the same version
+
+		if not self.get_is_extended():
+			base = '-base'
+
+		return '{}{}v(\d+\.\d+\.\d+){}.ocmod\.zip'.format(
+			self.get_code(),
+			package_text,
+			base)
+
+	def get_package_dir(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		return self.crawler_dir + self.get_code() + "/"
+
+	def get_saved_version(self):
+		import glob
+		import re
+		versions = []
+
+		for f in glob.glob(self.get_package_dir()+"*"):
+			file = os.path.basename(f)
+			reg = self.get_package_regex()
+			match = re.match(reg, file)
+
+			if match:
+				versions.append(match.group(1))
+			else:
+				raise KeyError("Failed to detect version")
+
+		if len(versions) > 0:
+			return self.get_latest_version(versions)
+		else:
+			return ''
+
+	@staticmethod
+	def version_compare(v1, v2):
+		major1, minor1, patch1 = v1.split(".")
+		major2, minor2, patch2 = v2.split(".")
+
+		major1 = int(major1)
+		minor1 = int(minor1)
+		patch1 = int(patch1)
+		major2 = int(major2)
+		minor2 = int(minor2)
+		patch2 = int(patch2)
+
+		if major1 != major2:
+			return major1 - major2
+
+		if minor1 != minor2:
+			return minor1 - minor2
+
+		return patch1 - patch2
+
+	def get_latest_version(self, v_list):
+		if len(v_list) == 0:
+			raise KeyError('Versions list is empty')
+
+		latest = v_list[0]
+
+		for v in v_list:
+			if self.version_compare(v, latest) > 0:
+				latest = v
+
+		return latest
+
+	@staticmethod
+	def increment_version(version):
+		major, minor, patch = version.split(".")
+		patch = int(patch) + 1
+
+		return '{}.{}.{}'.format(major, minor, patch)
+
+	def update_version(self):
+		if self.module is None:
+			raise KeyError('No nodule is selected')
+
+		print('Package version: {}({})'.format(self.version, self.saved_crc))
+
+		for node in self.module:
+			if node.tag == "version":
+				node.text = self.version
+
+			if node.tag == "crc":
+				node.text = self.saved_crc
+
+	def is_crc_equals(self):
+		if self.saved_crc is None:
+			raise KeyError("CRC is not provided")
+
+		crc1 = self.get_crc()
+		crc2 = self.saved_crc
+		res = crc1 == crc2
+
+		return res
+
+	def set_saved_crc(self, crc):
+		self.saved_crc = crc

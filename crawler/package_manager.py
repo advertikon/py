@@ -1,4 +1,3 @@
-import glob
 import os
 from lxml import etree
 
@@ -154,7 +153,7 @@ class PackageManager:
 			count += 1
 
 	def load_module(self, number):
-		self.module = self.read_packages()[number-1]
+		self.module = self.read_packages()[number - 1]
 
 	def get_include_files(self):
 		if self.module is None:
@@ -174,7 +173,7 @@ class PackageManager:
 			return self.include_files_list
 
 		for f in files.split(","):
-			self.include_files_list.append( f.strip() )
+			self.include_files_list.append(f.strip())
 
 		return self.include_files_list
 
@@ -196,7 +195,7 @@ class PackageManager:
 			return self.exclude_files_list
 
 		for f in files.split(","):
-			self.exclude_files_list.append( f.strip() )
+			self.exclude_files_list.append(f.strip())
 
 		return self.exclude_files_list
 
@@ -218,7 +217,7 @@ class PackageManager:
 			return self.include_folders_list
 
 		for f in files.split(","):
-			self.include_folders_list.append( f.strip().strip('/') )
+			self.include_folders_list.append(f.strip().strip('/'))
 
 		return self.include_folders_list
 
@@ -240,7 +239,7 @@ class PackageManager:
 			return self.exclude_folders_list
 
 		for f in files.split(","):
-			self.exclude_folders_list.append( f.strip().strip('/') )
+			self.exclude_folders_list.append(f.strip().strip('/'))
 
 		return self.exclude_folders_list
 
@@ -262,7 +261,7 @@ class PackageManager:
 			return self.include_regex_list
 
 		for f in files.split(","):
-			self.include_regex_list.append( f.strip() )
+			self.include_regex_list.append(f.strip())
 
 		return self.include_regex_list
 
@@ -284,7 +283,7 @@ class PackageManager:
 			return self.exclude_regex_list
 
 		for f in files.split(","):
-			self.exclude_regex_list.append( f.strip() )
+			self.exclude_regex_list.append(f.strip())
 
 		return self.exclude_regex_list
 
@@ -379,9 +378,23 @@ class PackageManager:
 			self.get_version(),
 			base)
 
+	def get_oc2_package_name(self):
+		base = ''
+
+		if not self.get_is_extended():
+			base = '-base'
+
+		return '{}{}/{}{}v{}{}.ocmod'.format(
+			self.crawler_dir,
+			self.get_code(),
+			self.get_code(),
+			self.oc2_package_text,
+			self.get_version(),
+			base)
+
 	def get_package_regex(self):
 		base = ''
-		package_text = self.oc3_package_text # Oc2 and OC3 should have the same version
+		package_text = self.oc3_package_text  # Oc2 and OC3 should have the same version
 
 		if not self.get_is_extended():
 			base = '-base'
@@ -402,15 +415,13 @@ class PackageManager:
 		import re
 		versions = []
 
-		for f in glob.glob(self.get_package_dir()+"*"):
+		for f in glob.glob(self.get_package_dir() + "*"):
 			file = os.path.basename(f)
 			reg = self.get_package_regex()
 			match = re.match(reg, file)
 
 			if match:
 				versions.append(match.group(1))
-			else:
-				raise KeyError("Failed to detect version")
 
 		if len(versions) > 0:
 			return self.get_latest_version(versions)

@@ -1,5 +1,6 @@
 from package_manager import PackageManager
 from file_manager import FileManager
+from profiler import Profiler
 import sys
 
 
@@ -34,7 +35,13 @@ elif action == 's':
 		print("Number expected")
 		sys.exit(1)
 
+	profiler = Profiler()
+	profiler_label = "Process"
+	profiler.start(profiler_label)
 	pm.load_module(n)
 	fm = FileManager(pm)
 	fm.make_oc3()
+	fm.make_oc2()
 	pm.save()  # apply version and crc changes
+	fm.clean_up()
+	profiler.stop(profiler_label)

@@ -5,6 +5,7 @@ import os
 import random
 import sys
 import time
+from lxml import etree
 
 import requests
 from stem import Signal
@@ -17,6 +18,7 @@ sourceFile = None
 sourceUrl = None
 verbose = False
 showLibraries = False
+show_rating = False
 baseUrl = "https://www.appbrain.com/app/"
 startTime = time.time()
 
@@ -27,6 +29,7 @@ def print_usage():
 	print("-i - app ID")
 	print("-f - CSV file to read IDs from")
 	print("-l - show libraries")
+	print("-r - show rating")
 	print("-v - verbose")
 	print("-h - usage")
 
@@ -36,9 +39,10 @@ def process_arguments():
 	global sourceUrl
 	global verbose
 	global showLibraries
+	global show_rating
 
 	try:
-		opt, args = getopt.getopt(sys.argv[1:], 'vhi:f:l', [])
+		opt, args = getopt.getopt(sys.argv[1:], 'vhi:f:lr', [])
 	except getopt.GetoptError as err:
 		sys.stderr.write(str(err))
 		print_usage()
@@ -54,6 +58,8 @@ def process_arguments():
 			sourceUrl = v
 		elif o == '-l':
 			showLibraries = True
+		elif o == '-r':
+			show_rating = True
 		elif o == "-f":
 			if not os.path.isfile(v):
 				sys.stderr.write("{} is not a file\n".format(v))
@@ -72,6 +78,7 @@ def print_item(id, name="None", position="None"):
 	dom = htmldom.HtmlDom()
 	dom = dom.createDom(html)
 	wrapper = dom.find(".app-changelog")
+	xml = etree.HTML(html)
 
 	print("{} / {} / {}".format(id, name, position))
 
@@ -85,12 +92,29 @@ def print_item(id, name="None", position="None"):
 		print('{:12} - {}'.format(date, description))
 
 	if showLibraries:
+		print("")
 		libs = []
 
 		for lib in dom.find(".app-library-item"):
 			libs.append(lib.text().strip())
 
+		for i in range(0, len(libs)):
+			if libs[i] in ["libgdx", "Unity 3D", "Cocos2D-X", "Godot", "GameSalad", "Cocos2D", "Gamemaker: Studio", "AndEngine"]:
+				libs[i] = "\033[32m" + libs[i] + "\033[0m"
+
 		print("Libraries:", ", ".join(libs))
+
+	if show_rating:
+		print("")
+		print('{:5}{:15}{:10}{:10}'.format("Rank", "Country", "Category", "List"))
+
+		for rank_line in xml.findall(".//table/tr"):
+			rank = rank_line[0].text
+			country = rank_line[1].find("a").text
+			category = rank_line[2].text
+			listt = rank_line[3].text
+
+			print('{:5}{:15}{:10}{:10}'.format(rank, country, category, listt))
 
 	print("")
 

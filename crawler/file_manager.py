@@ -325,10 +325,19 @@ class FileManager:
 			f.write("<?php\n")
 
 			if not translations and not mandatory_translations:
-				f.write("$_['heading_title'] = 'My Extension'")
+				f.write("$_['heading_title'] = 'My Extension';\n")
 			else:
 				for t in mandatory_translations:
 					f.write(t)
+					match = re.search(r'\$_\[([\'\"])(.+?)\1\]', t )
+
+					if not match:
+						raise KeyError("Cannot detect key of mandatory translation")
+
+					key = match.group(2)
+
+					if key in translations:
+						translations.remove(key)
 
 				for t in translations:
 					f.write("$_['{}'] = '{}';\n".format(t, t))
@@ -354,6 +363,16 @@ class FileManager:
 			if translations or mandatory_translations:
 				for t in mandatory_translations:
 					f.write(t)
+
+					match = re.fullmatch(r'\$_([\'\"])(.+?)\1', t)
+
+					if not match:
+						raise KeyError("Cannot detect key of mandatory translation")
+
+					key = match.group(2)
+
+					if key in translations:
+						translations.remove(key)
 
 				for t in translations:
 					f.write("$_['{}'] = '{}';\n".format(t, t))

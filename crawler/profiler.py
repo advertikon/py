@@ -15,4 +15,4 @@ class Profiler:
 
 		start_time = self.stack[label]
 		del self.stack[label]
-		print('{}{:>20}: {:2.2f} sec'.format(' ' * len(self.stack), label, time.time() - start_time))
+		print('{:20.20}: {:2.2f} sec'.format('>' * len(self.stack) + label, time.time() - start_time))

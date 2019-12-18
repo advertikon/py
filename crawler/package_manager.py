@@ -430,6 +430,13 @@ class PackageManager:
 
 	@staticmethod
 	def version_compare(v1, v2):
+		if v1 == "" and v2 == "":
+			return 0
+		elif v1 == "":
+			return -1
+		elif v2 == "":
+			return 1
+
 		major1, minor1, patch1 = v1.split(".")
 		major2, minor2, patch2 = v2.split(".")
 

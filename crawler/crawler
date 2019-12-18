@@ -1,0 +1,3 @@
+#!/bin/bash
+source /home/max/Documents/py/crawler/venv/bin/activate
+python3 /home/max/Documents/py/crawler/crawler.py

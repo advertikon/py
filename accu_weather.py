@@ -44,12 +44,12 @@ base_url = 'https://api.accuweather.com/'
 loc = 'locations/v1/326514'
 details = 'true'
 detail = 'false'
-lang = 'uk-UA'
 lang = 'en-GB'
+lang = 'uk-UA'
 location_id = 326514
 location_id = 1219294 #bohatyrivka
 # location_id = 108301
-metric = 'true'
+metric = 'false'
 
 u = '{}{}?apikey={}&language={}&details={}'.format( base_url, loc, k1, lang, details )
 
@@ -67,17 +67,14 @@ u = '{}imagery/v1/maps/radsat/480x480/{}?apikey={}'.format( base_url, location_i
 u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&metric={}&details={}'.format( base_url, location_id, k1, metric, details )
 u = '{}alerts/v1/{}?apikey={}'.format( base_url, location_id, k1 )
 u = '{}alarms/v1/5day/{}?apikey={}'.format( base_url, location_id, k1 )
-<<<<<<< HEAD
 u = '{}forecasts/v1/hourly/12hour/{}?apikey={}&details={}&language={}&metric={}'.format( base_url, location_id, k1, details, lang, metric )
 u = '{}alarms/v1/1day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}forecasts/v1/daily/10day/{}?apikey={}&details=true&language={}&metric=true'.format( base_url, location_id, k1, lang )
-u = '{}forecasts/v1/hourly/24hour/{}?apikey={}&details={}&language={}&metric=true'.format( base_url, location_id, k1, details, lang )
 u = '{}currentconditions/v1/{}/historical/24?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
 u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}&metric=true'.format( base_url, location_id, k1, details, lang )
-=======
+u = '{}forecasts/v1/hourly/24hour/{}?apikey={}&details={}&language={}&metric=false'.format( base_url, location_id, k1, details, lang )
 u = '{}currentconditions/v1/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
-u = '{}forecasts/v1/daily/5day/{}?apikey={}&details={}&language={}'.format( base_url, location_id, k1, details, lang )
->>>>>>> 080d0703edcaffb4ae2c234de38a408b19bc0e57
+u = '{}forecasts/v1/daily/5day/{}?apikey={}&details=true&language={}'.format( base_url, location_id, k1, lang )
 
 with urllib.request.urlopen( u ) as f:
 	resp = f.read().decode( "utf-8" )
@@ -85,3 +82,5 @@ with urllib.request.urlopen( u ) as f:
 
 	# pprint.pprint( j, indent = 1 )
 	print( json.dumps( j, indent = 2 ) )
+
+print( u )

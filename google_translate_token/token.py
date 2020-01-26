@@ -1,5 +1,6 @@
 import urllib.request
 import re
+import sys
 
 '''
 Target file: https://translate.google.com.ua/translate/releases/twsfe_w_20190617_RC01/r/js/translate_m.js
@@ -143,7 +144,7 @@ def getBaseToken():
 	if baseToken:
 		return baseToken
 
-	print( 'Retrieving base token' )
+	sys.stderr.write( 'Retrieving base token\n' )
 	url = "https://translate.google.com/"
 
 	request  = urllib.request.Request( url, headers = headers )

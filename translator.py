@@ -177,6 +177,9 @@ def print_usage():
 	print( "Usage: ")
 	print( "Run int from a directory you need to create translations, eg app/src/main/res" )
 	print( "-v - verbose" )
+	print( "--from-language - from language (default EN)" )
+	print( "--to-language - to language" )
+	print( "-v - verbose" )
 	print( "-f - input file")
 	print( "-s - input string")
 	print( "-d - dry run")
@@ -188,9 +191,11 @@ def process_arguments():
 	global verbose
 	global inputString
 	global dryRun
+	global toLanguage
+	global fromLanguage
 
 	try:
-		opt, args = getopt.getopt( sys.argv[1:], 'dhf:vs:d', [] )
+		opt, args = getopt.getopt( sys.argv[1:], 'dhf:vs:d', ["from-language=", "to-language="] )
 
 	except getopt.GetoptError as err:
 		sys.stderr.write(str(err))
@@ -213,6 +218,16 @@ def process_arguments():
 			verbose = True
 		elif o == '-d':
 			dryRun = True
+		elif o == "--from-language":
+			fromLanguage = v
+		elif o == "--to-language":
+			toLanguage = v
+
+			if toLanguage not in languages.keys():
+				sys.stderr.write("Language {} is not in the list\n".format( toLanguage ) )
+				sys.stderr.write( "List of available languages:\n" )
+				sys.stderr.write( repr( languages.keys() ) )
+				sys.exit( 1 )
 
 	if not fileName and not inputString:
 		sys.stderr.write("Source required\n")
@@ -358,6 +373,7 @@ def check_cwd():
 
 def translate_string():
 	global myLanguages
+	global inputString
 
 	for toL in myLanguages:
 		query = {
@@ -368,10 +384,10 @@ def translate_string():
 			'ssel': 0,
 			'tsel': 0,
 			'kc': 1,
-			'q': input
+			'q': inputString
 		}
 
-		url = baseURL + "&" + urlencode(query) + token.get(input)
+		url = baseURL + "&" + urlencode(query) + token.get(inputString)
 		request = urllib.request.Request(url, headers=headers)
 		opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookieJar))
 		response = opener.open(request)
@@ -380,9 +396,9 @@ def translate_string():
 		json_response = json.loads(raw_response)
 		translation = json_response[0][0][0].replace("'", "\\'")
 
-		print("<{}>".format(toL))
+		# print("<{}>".format(toL))
 		print(translation)
-		print("</{}>".format(toL))
+		# print("</{}>".format(toL))
 
 
 def print_inline(text):
@@ -416,6 +432,8 @@ lastCallTime = 0
 callsStart = time.clock()
 unbuffered_out = None
 dryRun = False
+toLanguage = None
+fromLanguage = None
 
 terminal_rows, terminal_columns = os.popen('stty size', 'r').read().split()
 terminal_columns = int(terminal_columns)
@@ -528,13 +546,20 @@ myLanguages = {
 	# 'zu': 'Zulu'
 }
 
+fromL = "en"
+
 process_arguments()
-check_cwd()
+
 # while True:
 # 	calls_control()
 # sys.exit( 0 )
 
-fromL = "en"
+if toLanguage:
+	myLanguages = {toLanguage: languages[toLanguage]}
+
+if fromLanguage:
+	fromL = fromLanguage
+
 baseURL = 'https://translate.google.com/translate_a/single?client=webapp&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw' \
 	'&dt=rm&dt=ss&dt=t'
 
@@ -542,4 +567,5 @@ baseURL = 'https://translate.google.com/translate_a/single?client=webapp&dt=at&d
 if inputString:
 	translate_string()
 else:
+	check_cwd()
 	translate_file()

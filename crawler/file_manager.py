@@ -93,13 +93,27 @@ class FileManager:
 		return None
 
 	def filter_folder(self, file):
-		folder = os.path.dirname(file)
+		file_folder = os.path.dirname(file)
 
-		if folder in self.package_manager.get_include_folders():
-			return True
+		for folder in self.package_manager.get_include_folders():
+			if folder.endswith("/*") and len(folder) - 2 <= len(file_folder):
+				folder_part = folder[:-2]
+				file_part = file_folder[:len(folder_part)]
 
-		if folder in self.package_manager.get_exclude_folders():
-			return False
+				if folder_part == file_part:
+					return True
+			elif folder == file_folder:
+				return True
+
+		for folder in self.package_manager.get_exclude_folders():
+			if folder.endswith("/*") and len(folder) - 2 <= len(file_folder):
+				folder_part = folder[:-2]
+				file_part = file_folder[:len(folder_part)]
+
+				if folder_part == file_part:
+					return False
+			elif folder == file_folder:
+				return False
 
 		return None
 
@@ -329,7 +343,7 @@ class FileManager:
 			else:
 				for t in mandatory_translations:
 					f.write(t)
-					match = re.search(r'\$_\[([\'\"])(.+?)\1\]', t )
+					match = re.search(r'\$_\[([\'\"])(.+?)\1\]', t)
 
 					if not match:
 						raise KeyError("Cannot detect key of mandatory translation")

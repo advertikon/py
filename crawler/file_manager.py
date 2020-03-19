@@ -93,27 +93,41 @@ class FileManager:
 		return None
 
 	def filter_folder(self, file):
+		is_include = self.is_include_folder(file)
+		is_exclude = self.is_exclude_folder(file)
+
+		if is_include:
+			return not is_exclude
+		elif is_exclude:
+			return False
+
+		return None
+
+	def is_include_folder(self, file):
 		file_folder = os.path.dirname(file)
 
 		for folder in self.package_manager.get_include_folders():
 			if folder.endswith("/*") and len(folder) - 2 <= len(file_folder):
 				folder_part = folder[:-2]
-				file_part = file_folder[:len(folder_part)]
-
-				if folder_part == file_part:
+				if file_folder.startswith(folder_part):
 					return True
-			elif folder == file_folder:
-				return True
+			else:
+				if folder == file_folder:
+					return True
+
+		return None
+
+	def is_exclude_folder(self, file):
+		file_folder = os.path.dirname(file)
 
 		for folder in self.package_manager.get_exclude_folders():
 			if folder.endswith("/*") and len(folder) - 2 <= len(file_folder):
 				folder_part = folder[:-2]
-				file_part = file_folder[:len(folder_part)]
-
-				if folder_part == file_part:
-					return False
-			elif folder == file_folder:
-				return False
+				if file_folder.startswith(folder_part):
+					return True
+			else:
+				if folder == file_folder:
+					return True
 
 		return None
 

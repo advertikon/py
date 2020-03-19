@@ -1,2 +1,4 @@
 cache/*
 .scrapy/google
+__pycache__/
+**.py[cod]

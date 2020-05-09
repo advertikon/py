@@ -592,7 +592,7 @@ class FileManager:
 						with open(new_file, "r+") as f0:
 							count = 0
 
-							while count < 100:
+							while count < 10000:
 								count += 1
 
 								line = f0.readline()

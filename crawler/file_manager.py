@@ -44,7 +44,8 @@ class FileManager:
 
 		self.profiler.stop(profiler_label)
 
-	def filter(self, file):
+	def filter(self, file, explain = False ):
+		"""Use 'Explain' to enforce strict filter mode - filter out only explicitly set items"""
 		if not self.filter_package_files(file):
 			return False
 
@@ -53,6 +54,8 @@ class FileManager:
 		if result == True:
 			return True
 		elif result == False:
+			if explain:
+				print("By file name")
 			return False
 
 		result = self.filter_folder(file)
@@ -60,6 +63,8 @@ class FileManager:
 		if result == True:
 			return True
 		elif result == False:
+			if explain:
+				print("By folder name")
 			return False
 
 		result = self.filter_regex(file)
@@ -67,8 +72,12 @@ class FileManager:
 		if result == True:
 			return True
 		elif result == False:
+			if explain:
+				print("By regex")
 			return False
 
+		if explain:
+			return True
 		return False
 
 	@staticmethod
@@ -185,7 +194,10 @@ class FileManager:
 			if self.files.count(file) > 0:
 				print(self.notice_color('Duplicated source {}'.format(file)))
 			else:
-				self.files.append(file)
+				if self.filter(file, True ):
+					self.files.append(file)
+				else:
+					print(self.notice_color('{} is filtered out'.format(file)))
 		else:
 			print(self.error_color('Source {} is not a file'.format(file)))
 
